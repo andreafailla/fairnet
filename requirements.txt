@@ -1,0 +1,6 @@
+networkx
+numpy
+deap
+matplotlib
+seaborn
+tqdm

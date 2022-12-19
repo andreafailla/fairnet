@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
-__author__ = "PackageOwner"
+__author__ = "Andrea Failla"
 __license__ = "BSD-2-Clause"
 __email__ = "email"
 
@@ -18,11 +18,11 @@ with open(path.join(here, "requirements.txt"), encoding="utf-8") as f:
 
 
 setup(
-    name="package_name",
+    name="fairnet",
     version="0.0.1",
     license="BSD-Clause-2",
     description="Package description",
-    url="https://github.com/USERNAME/project",
+    url="https://github.com/andreafailla/fairnet-py",
     author="Author Name",
     author_email="email",
     classifiers=[
