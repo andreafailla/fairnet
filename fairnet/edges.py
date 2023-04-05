@@ -20,15 +20,16 @@ def get_plausible_edges(fn):
         neighs2.difference(neighs)
         for n in neighs2:
             if fn.strategy.endswith("g"):
-                if n in fn.disc_nodes:
+                if fn.is_marginalized(n):
                     n_neighs = set(fn.g.neighbors(n))
                     weight = len(neighs.intersection(n_neighs))
-                    if fn.marg_dict[node] > 0:
+                    if fn.marg_dict[node] > 0 and fn.marg_dict[n] > 0:
                         if fn.attrs[n] != fn.attrs[node]:
                             plausible.add_edge(node, n, weight=weight)
-                    elif fn.marg_dict[node] < 0:
+                    elif fn.marg_dict[node] < 0 and fn.marg_dict[n] < 0:
                         if fn.attrs[n] == fn.attrs[node]:
                             plausible.add_edge(node, n, weight=weight)
+
             else:  # local
                 n_neighs = set(fn.g.neighbors(n))
                 weight = len(neighs.intersection(n_neighs))
@@ -50,8 +51,8 @@ def get_removable_edges(fn):
 
     if fn.strategy.endswith("g"):
         for k, v in edges.items():
-            if k[0] in fn.disc_nodes and k[1] in fn.disc_nodes:
-                if fn.marg_dict[k[0]] > 0:
+            if fn.is_marginalized(k[0]) and fn.is_marginalized(k[1]):
+                if fn.attrs[k[0]] == fn.attrs[k[1]]:
                     if fn.attrs[k[0]] == fn.attrs[k[1]]:
                         removable[k] = v
                 elif fn.marg_dict[k[0]] < 0:
@@ -60,7 +61,7 @@ def get_removable_edges(fn):
 
     else:  # local
         for k, v in edges.items():
-            if k[0] in fn.disc_nodes or k[1] in fn.disc_nodes:
+            if fn.is_marginalized(k[0]) or fn.is_marginalized(k[1]):
                 removable[k] = v
 
     removable = dict(sorted(removable.items(), key=lambda item: item[1]))

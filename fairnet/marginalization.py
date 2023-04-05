@@ -3,7 +3,7 @@ import numpy as np
 
 __all__ = [
     "compute_weights",
-    "node_marginalization_score",
+    "individual_marginalization_score",
     "compute_marginalization_scores",
     "network_marginalization_score",
     "get_marginalized_nodes",
@@ -20,13 +20,13 @@ def compute_weights(attrs):
     weights = dict()
     sizes = dict(Counter(list(attrs.values())))
 
-    for k, v in sizes.items():
-        weights[k] = 1 - (v - 1) / (len(list(attrs.keys())) - 1)
+    for attr, size in sizes.items():
+        weights[attr] = 1 - (size - 1) / (len(attrs) - 1)
 
     return weights
 
 
-def node_marginalization_score(g, node, attrs, weights):
+def individual_marginalization_score(g, node, attrs, weights):
     """
     _summary_
 
@@ -74,7 +74,7 @@ def compute_marginalization_scores(g, attrs, weights):
     marg_dict = dict()
 
     for node in g.nodes():
-        marg_dict[node] = node_marginalization_score(g, node, attrs, weights)
+        marg_dict[node] = individual_marginalization_score(g, node, attrs, weights)
 
     return marg_dict
 

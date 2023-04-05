@@ -18,8 +18,8 @@ class FairNet(object):
         :param attrs: The node-to-attribute value dict
        
         """
-        self.g = g
-        self.attrs = attrs
+        self.g = g.copy()
+        self.attrs = {k: v for k, v in attrs.items()}
 
         self.missing = [
             n for n in self.g.nodes() if n not in self.attrs
@@ -42,7 +42,7 @@ class FairNet(object):
         self.disc_nodes = None
 
         self.logbook = None
-    
+        self.solution = None
 
     def __label_encoder(self):
         enc = dict()
@@ -58,7 +58,7 @@ class FairNet(object):
         """
         Computes marginalization scores and detects marginalized nodes given a treshold.
 
-        :param tresh: min marginalization value for a node to be considered as marginalized.
+        :param thresh: min marginalization value for a node to be considered as marginalized.
        
         """
 
@@ -81,16 +81,22 @@ class FairNet(object):
         display=True,
     ):
         """
-        run _summary_
+        The run function is the main function of the GA. It takes in a fitness
+        object, a strategy object, and an optional parameter to add edges to the graph.
+        It then runs through all of these steps:
 
-        :param fitness: _description_
-        :param strategy: _description_
-        :param to_add: _description_, defaults to None
-        :param to_remove: _description_, defaults to None
-        :param GA_params: _description_, defaults to None
-        :param display: _description_, defaults to True
-        :raises ValueError: _description_
+        :param self: Reference the object itself
+        :param fitness: Define the fitness function
+        :param strategy: Select the type of algorithm to use
+        :param to_add=None: Add edges to the graph
+        :param to_remove=None: Remove edges from the graph
+        :param GA_params=None: Pass a dictionary of parameters to the genetic algorithm
+        :param display=True: Display the graph of the fitness function
+        :param : Store the fitness function
+        :return: The graph, the logbook and the individual
+        :doc-author: Trelent
         """
+
 
         self.fitness = fitness
         self.strategy = strategy.lower()
@@ -106,13 +112,17 @@ class FairNet(object):
                 raise ValueError("You must set the 'to_remove' parameter")
             edges = get_removable_edges(self)
             self.candidates.extend(edges)
-        print(f'Starting GA over {len(self.candidates)} candidates...')
+        print(f"Starting GA over {len(self.candidates)} candidates...")
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            g, logbook = reduce_marginalization_genetic(self, GA_params)
-        
+            g, logbook, individual = reduce_marginalization_genetic(self, GA_params)
+
         self.g = g
         self.logbook = logbook
+
+        self.solution = []
+        indexes = [i for i, j in enumerate(individual) if j == 1]
+        self.solution = [self.candidates[i][:2] for i in indexes]
         if display:
             plot_GA_eval(logbook=logbook, fitness=self.fitness)
 
@@ -158,9 +168,15 @@ class FairNet(object):
         if display:
             plot_GA_eval(logbook=logbook, fitness=self.fitness)
 
+    def get_modified_edges(self):
+        return self.solution
+
     def get_graph(self):
         return self.g
 
     def get_attributes(self):
         return self.attrs
+
+    def is_marginalized(self, node):
+        return abs(self.marg_dict[node]) > self.thresh
 

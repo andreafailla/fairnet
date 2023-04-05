@@ -36,15 +36,10 @@ def evaluate_marginalization(
 
     all_edges = [fn.candidates[i][:2] for i in indexes]
 
-    node_list = list(set(list(sum(all_edges, ()))))  # nodes affected by tested solution
-
-    num_marg_nodes = (
-        0  # amount of marginalized nodes in network after applying the solution
-    )
-
-    fair_marg = [
-        abs(v) for k, v in fn.marg_dict.items() if k not in node_list
-    ]  # marg score of network after applying the solution
+    affected = set()  # nodes affected by tested solution
+    for u, v in all_edges:
+        affected.add(u)
+        affected.add(v)
 
     for e in all_edges:
         if eva_g.has_edge(*e):
@@ -52,8 +47,13 @@ def evaluate_marginalization(
         else:
             eva_g.add_edge(*e)
 
-    for node in node_list:
-        marg = node_marginalization_score(eva_g, node, fn.attrs, fn.weights)
+    num_marg_nodes = (
+        0  # amount of marginalized nodes in network after applying the solution
+    )
+
+    fair_marg = []  # marg score of network after applying the solution
+    for node in eva_g.nodes():
+        marg = individual_marginalization_score(eva_g, node, fn.attrs, fn.weights)
         fair_marg.append(abs(marg))
         if abs(marg) > fn.thresh:
             num_marg_nodes += 1
@@ -61,7 +61,7 @@ def evaluate_marginalization(
     budget = sum(individual)
 
     if return_net:
-        return eva_g, budget
+        return eva_g, budget, individual
 
     if fn.fitness == "nodes":
         return num_marg_nodes, budget, np.mean(fair_marg)
@@ -115,10 +115,10 @@ def reduce_marginalization_genetic(fn, GA_params):
     )  # funzione di valutazione. Vedi quanto detto sopra
     toolbox.register("mate", tools.cxTwoPoint)  # funzione di crossover
     toolbox.register(
-        "mutate", tools.mutFlipBit, indpb=0.05
+        "mutate", tools.mutFlipBit, indpb=0.2
     )  # funzione di mutazione custom
     toolbox.register("select", tools.selTournament, tournsize=3)
-    
+
     NUM_GENERATIONS = GA_params["NUM_GENERATIONS"]  # numero di generazioni
     POPULATION_SIZE = GA_params["POPULATION_SIZE"]  # popolazione per gen
 
@@ -137,10 +137,8 @@ def reduce_marginalization_genetic(fn, GA_params):
     stats.register("best", np.min, axis=0)
     stats.register("avg", np.mean, axis=0)
 
-
     logbook = tools.Logbook()
     logbook.header = "gen", "best", "avg", "other", "budget"
-
 
     invalid_individuals = [ind for ind in pop if not ind.fitness.valid]
     fitnesses = toolbox.map(toolbox.evaluate, invalid_individuals)
@@ -150,7 +148,9 @@ def reduce_marginalization_genetic(fn, GA_params):
     hof.update(pop)
 
     record = stats.compile(pop)
-    logbook.record(gen=0, budget=hof[0].fitness.values[1], other=hof[0].fitness.values[2], **record)
+    logbook.record(
+        gen=0, budget=hof[0].fitness.values[1], other=hof[0].fitness.values[2], **record
+    )
     print(logbook.stream)
 
     for gen in range(1, NUM_GENERATIONS + 1):
@@ -186,12 +186,17 @@ def reduce_marginalization_genetic(fn, GA_params):
 
         # Append the current generation statistics to the logbook
         record = stats.compile(pop) if stats else {}
-        logbook.record(gen=gen, budget=hof[0].fitness.values[1],other=hof[0].fitness.values[2], **record)
+        logbook.record(
+            gen=gen,
+            budget=hof[0].fitness.values[1],
+            other=hof[0].fitness.values[2],
+            **record
+        )
         print(logbook.stream)
 
-    hof.update(pop)  
-    g, _ = evaluate_marginalization(hof.items[0], fn=fn, return_net=True)
-    return g, logbook
+    hof.update(pop)
+    g, _, individual = evaluate_marginalization(hof.items[0], fn=fn, return_net=True)
+    return g, logbook, individual
 
 
 def random_individual_missing(fn):
@@ -319,11 +324,11 @@ def replace_mv_genetic(fn, GA_params):
     hof = tools.HallOfFame(n_HOF)
 
     stats = tools.Statistics(lambda ind: ind.fitness.values[0])
-    stats.register("min", np.min, axis=0)
+    stats.register("best", np.min, axis=0)
     stats.register("avg", np.mean, axis=0)
 
     logbook = tools.Logbook()
-    logbook.header = ["gen", "nevals"] + stats.fields
+    logbook.header = ["gen"] + stats.fields
 
     invalid_individuals = [ind for ind in pop if not ind.fitness.valid]
     fitnesses = toolbox.map(toolbox.evaluate_missing, invalid_individuals)
@@ -333,7 +338,7 @@ def replace_mv_genetic(fn, GA_params):
     hof.update(pop)
 
     record = stats.compile(pop)
-    logbook.record(gen=0, best="-", nevals=len(invalid_individuals), **record)
+    logbook.record(gen=0, **record)
 
     print(logbook.stream)
 
@@ -370,7 +375,7 @@ def replace_mv_genetic(fn, GA_params):
 
         # Append the current generation statistics to the logbook
         record = stats.compile(pop) if stats else {}
-        logbook.record(gen=gen, nevals=len(invalid_ind), **record)
+        logbook.record(gen=gen, **record)
 
         print(logbook.stream)
 

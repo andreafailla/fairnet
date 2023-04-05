@@ -16,21 +16,18 @@ def plot_GA_eval(logbook, fitness):
     :param fitness: _description_
     """
     sns.set_style("whitegrid")
-    plt.figure(1)
     minFitnessValues, meanFitnessValues = logbook.select("best", "avg")
-    plt.figure(2)
 
-    # plt.plot(maxFitnessValues, color='red')
-    plt.plot(minFitnessValues, color="blue")
-    plt.plot(meanFitnessValues, color="green")
+    plt.plot(minFitnessValues, color="blue", label="best")
+    plt.plot(meanFitnessValues, color="green", label="avg")
+
     plt.xlabel("Generation")
     if fitness == "nodes":
         plt.ylabel("Marginalized Nodes")
-        plt.title("Avg and Min Marginalized Nodes")
     elif fitness == "marg":
         plt.ylabel("Marginalization Score")
-        plt.title("Avg and Min Marginalization Score")
-    # show both plots:
+    plt.legend()
+    plt.tight_layout()
     plt.show()
 
 
