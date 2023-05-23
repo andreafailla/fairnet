@@ -67,7 +67,8 @@ def evaluate_marginalization(
         return num_marg_nodes, budget, np.mean(fair_marg)
     elif fn.fitness == "marg":
         return np.mean(fair_marg), budget, num_marg_nodes
-
+    elif fn.fitness == "round":
+        return round(np.mean(fair_marg), 2), budget, num_marg_nodes
 
 def reduce_marginalization_genetic(fn, GA_params):
     """
@@ -256,6 +257,8 @@ def evaluate_missing(individual, fn, return_net):
         return overall_marg, len(disc_nodes)
     elif fn.fitness == "nodes":
         return len(disc_nodes), overall_marg
+    elif fn.fitness == "round":
+        return round(np.mean(fair_marg), 2), budget, num_marg_nodes
 
 
 def replace_mv_genetic(fn, GA_params):
