@@ -1,5 +1,7 @@
 __all__ = ["FairNet"]
 
+import networkx as nx
+
 from .marginalization import *
 from .genetic import *
 from .viz import *
@@ -9,7 +11,7 @@ import warnings
 
 
 class FairNet(object):
-    def __init__(self, g: object, attrs: dict):
+    def __init__(self, g: nx.Graph, attrs: dict):
         """
         Initialize the FairNet object.
         Throws a warning if 'attrs' lacks attribute values for any node.
@@ -43,6 +45,7 @@ class FairNet(object):
 
         self.logbook = None
         self.solution = None
+        self.fair_g = None
 
     def __label_encoder(self):
         enc = dict()
@@ -56,10 +59,9 @@ class FairNet(object):
 
     def fit(self, thresh: float) -> object:
         """
-        Computes marginalization scores and detects marginalized nodes given a treshold.
-
-        :param thresh: min marginalization value for a node to be considered as marginalized.
-       
+        Fits the FairNet object. Computes the weights, the marginalization scores, and the marginalized nodes.
+        :param thresh: the threshold for marginalization
+        :return: self
         """
 
         self.thresh = thresh
@@ -72,31 +74,24 @@ class FairNet(object):
         return self
 
     def run(
-        self,
-        fitness,
-        strategy,
-        to_add=None,
-        to_remove=None,
-        GA_params=None,
-        display=True,
+            self,
+            fitness: str,
+            strategy: str,
+            to_add: float = None,
+            to_remove: float = None,
+            GA_params: dict = None,
+            display: bool = True,
     ):
         """
-        The run function is the main function of the GA. It takes in a fitness
-        object, a strategy object, and an optional parameter to add edges to the graph.
-        It then runs through all of these steps:
-
-        :param self: Reference the object itself
-        :param fitness: Define the fitness function
-        :param strategy: Select the type of algorithm to use
-        :param to_add=None: Add edges to the graph
-        :param to_remove=None: Remove edges from the graph
-        :param GA_params=None: Pass a dictionary of parameters to the genetic algorithm
-        :param display=True: Display the graph of the fitness function
-        :param : Store the fitness function
-        :return: The graph, the logbook and the individual
-        :doc-author: Trelent
+        Executes the algorithm to reduce marginalization.
+        :param fitness: either 'marg' or 'nodes'
+        :param strategy:
+        :param to_add: the percentage of edges to add among the plausible ones
+        :param to_remove: the percentage of edges to remove among the removable ones
+        :param GA_params: the dictionary of parameters for the genetic algorithm
+        :param display: whether to display the GA evaluation
+        :return:
         """
-
 
         self.fitness = fitness
         self.strategy = strategy.lower()
@@ -117,7 +112,7 @@ class FairNet(object):
             warnings.simplefilter("ignore")
             g, logbook, individual = reduce_marginalization_genetic(self, GA_params)
 
-        self.g = g
+        self.fair_g = g
         self.logbook = logbook
 
         self.solution = []
@@ -128,7 +123,9 @@ class FairNet(object):
 
     def marginalization_info(self) -> None:
         """
-        marginalization_info 
+        Prints marginalization information. In detail, it prints the weights, the number of marginalized nodes,
+        the average marginalization score, and plots the marginalization scores.
+        return:
         """
         print("=" * 10, "STATS", "=" * 10)
         print("\nWeights:", self.weights)
@@ -145,38 +142,53 @@ class FairNet(object):
 
         plot_marginalization_scores_by_attr(self.attrs, self.marg_dict)
 
-    def replace_missing_values(self, thresh, fitness, GA_params=None, display=True):
+    def replace_missing_values(self, thresh: float, fitness: str, GA_params=None, display=True):
         """
-        replace_missing_values _summary_
-
-        :param thresh: _description_
-        
-        :param fitness: _description_
-        
-        :param GA_params: _description_, defaults to None
-        :param display: _description_, defaults to True
+        Replaces missing values so as to minimize marginalization.
+        :param thresh: the threshold for marginalization
+        :param fitness: either 'marg' or 'nodes'
+        :param GA_params: the dictionary of parameters for the genetic algorithm
+        :param display: whether to display the GA evaluation
+        :return:
         """
         self.thresh = thresh
         self.fitness = fitness.lower()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            attrs, logbook = replace_mv_genetic(self, GA_params=GA_params)
+            attrs, logbook = replace_missing_values_genetic(self, GA_params=GA_params)
 
         self.attrs = attrs
+        self.logbook = logbook
         self.missing = []
 
         if display:
             plot_GA_eval(logbook=logbook, fitness=self.fitness)
 
     def get_modified_edges(self):
+        """
+        Returns the edges that have been added or removed by the algorithm.
+        :return: a list of tuples (u, v, weight)
+        """
         return self.solution
 
-    def get_graph(self):
-        return self.g
+    def get_fair_graph(self):
+        """
+        Returns the fair graph, i.e., the graph with the added/removed edges.
+        :return:
+        """
+        return self.fair_g
 
     def get_attributes(self):
+        """
+        Returns the attributes of the nodes.
+        :return: a dictionary {node: attribute_value}
+        """
         return self.attrs
 
     def is_marginalized(self, node):
+        """
+        Returns True if the node is marginalized, False otherwise.
+        :param node: the node to check
+        :return: True if the node is marginalized, False otherwise
+        """
         return abs(self.marg_dict[node]) > self.thresh
-

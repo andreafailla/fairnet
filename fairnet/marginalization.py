@@ -1,4 +1,6 @@
 from collections import Counter
+
+import networkx as nx
 import numpy as np
 
 __all__ = [
@@ -10,12 +12,11 @@ __all__ = [
 ]
 
 
-def compute_weights(attrs):
+def compute_weights(attrs: dict) -> dict:
     """
-    _summary_
-
-    :param attrs: _description_
-    :return: _description_
+    Compute the weights of the attributes in the graph. These will be used to compute the marginalization scores.
+    :param attrs: the node-to-attribute value dict
+    :return: a dictionary containing the weights
     """
     weights = dict()
     sizes = dict(Counter(list(attrs.values())))
@@ -26,17 +27,15 @@ def compute_weights(attrs):
     return weights
 
 
-def individual_marginalization_score(g, node, attrs, weights):
+def individual_marginalization_score(g: nx.Graph, node: int, attrs: dict, weights: dict) -> float:
     """
-    _summary_
-
-    :param g: _description_
-    :param node: _description_
-    :param attrs: _description_
-    :param weights: _description_
-    :return: _description_
+    Computes the marginalization score of a node.
+    :param g: the graph object
+    :param node: the node identifier
+    :param attrs: the node-to-attribute value dict
+    :param weights: the attribute weights
+    :return: the marginalization score for the node
     """
-
     attr = attrs[node]
     marg = 0
     neighs = list(g.neighbors(node))
@@ -61,14 +60,14 @@ def individual_marginalization_score(g, node, attrs, weights):
     return marg
 
 
-def compute_marginalization_scores(g, attrs, weights):
+def compute_marginalization_scores(g: nx.Graph, attrs: dict, weights: dict) -> dict:
     """
-    _summary_
+    Computes the marginalization scores for all nodes in the graph.
 
-    :param g: _description_
-    :param attrs: _description_
-    :param weights: _description_
-    :return: _description_
+    :param g: the graph object
+    :param attrs: the node-to-attribute value dict
+    :param weights: the attribute weights
+    :return: a dictionary containing the marginalization scores
     """
 
     marg_dict = dict()
@@ -81,20 +80,19 @@ def compute_marginalization_scores(g, attrs, weights):
 
 def network_marginalization_score(marg_dict):
     """
-    _summary_
-
-    :param marg_dict: _description_
-    :return: _description_
+    Computes the marginalization score for the entire network. The network marginalization score is the average of the
+    absolute values of the marginalization scores of the nodes.
+    :param marg_dict:
+    :return:
     """
     return np.mean([abs(v) for v in marg_dict.values()])
 
 
-def get_marginalized_nodes(marg_dict, threshold):
+def get_marginalized_nodes(marg_dict: dict, threshold: float) -> list:
     """
-    _summary_
-
-    :param marg_dict: _description_
-    :param threshold: _description_
-    :return: _description_
+    Returns the nodes whose marginalization score is greater than the threshold.
+    :param marg_dict: a dictionary containing the marginalization scores
+    :param threshold: the threshold
+    :return: a list of nodes
     """
     return [k for k, v in marg_dict.items() if abs(v) > threshold]

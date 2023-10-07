@@ -3,34 +3,33 @@ from deap import creator, base, tools
 import copy
 from .marginalization import *
 
-__all__ = ["reduce_marginalization_genetic", "replace_mv_genetic"]
+__all__ = ["reduce_marginalization_genetic", "replace_missing_values_genetic"]
 
 
 def random_individual(fn):
     """
-    _summary_
-
-    :param fn: _description_
-    :return: _description_
+    generates a random individual for the GA
+    :param fn: the FairNet object
+    :return: a list of 0s and 1s, where 1s
     """
 
     return list(np.random.choice(a=[0, 1], size=(len(fn.candidates))))
 
 
 def evaluate_marginalization(
-    individual, fn, return_net,
+        individual, fn, return_net,
 ):
     """
-    _summary_
-
-    :param individual: _description_
-    :param fn: _description_
-    :param return_net: _description_
-    :return: _description_
+    Evaluation function for the GA.
+    It computes the marginalization score of the network after applying the solution.
+    :param individual:
+    :param fn:
+    :param return_net:
+    :return:
     """
     individual = individual[0]  # <- because DEAP
 
-    eva_g = copy.deepcopy(fn.g)  # copy of OG network, modified for testing the solution
+    eva_g = fn.g.copy()  # copy of OG network, modified for testing the solution
 
     indexes = [i for i, j in enumerate(individual) if j == 1]
 
@@ -65,10 +64,11 @@ def evaluate_marginalization(
 
     if fn.fitness == "nodes":
         return num_marg_nodes, budget, np.mean(fair_marg)
-    elif fn.fitness == "marg":
+    else:  # fn.fitness == "marg":
         return np.mean(fair_marg), budget, num_marg_nodes
-    elif fn.fitness == "round":
-        return round(np.mean(fair_marg), 2), budget, num_marg_nodes
+    # elif fn.fitness == "round":
+    #    return round(np.mean(fair_marg), 2), budget, num_marg_nodes
+
 
 def reduce_marginalization_genetic(fn, GA_params):
     """
@@ -90,15 +90,14 @@ def reduce_marginalization_genetic(fn, GA_params):
 
     creator.create(
         "Fitness", base.Fitness, weights=(-1.0, -1.0, -1.0)
-    )  # <- -1 perché vogliamo minimizzare la fitness
+    )  # fitness function
     creator.create(
         "Individual", list, fitness=creator.Fitness
-    )  # <- l'individuo è definito come lista
+    )  # individual class (list) with fitness attribute
 
     toolbox = base.Toolbox()  # creiamo il toolbox
 
     toolbox.register("random_individual", random_individual, fn)
-    # "nome_della_funzione per deap", nome_della_funzione vera e propria di python, parametri che passi alla funzione
 
     toolbox.register(
         "individual",
@@ -107,14 +106,13 @@ def reduce_marginalization_genetic(fn, GA_params):
         toolbox.random_individual,
         n=1,
     )
-    # n = numero di individui nella popolazione. Lasciamo 1
 
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
     toolbox.register(
         "evaluate", evaluate_marginalization, fn=fn, return_net=return_net
     )  # funzione di valutazione. Vedi quanto detto sopra
-    toolbox.register("mate", tools.cxTwoPoint)  # funzione di crossover
+    toolbox.register("mate", tools.cxUniform, indpb=0.50)  # funzione di crossover
     toolbox.register(
         "mutate", tools.mutFlipBit, indpb=0.2
     )  # funzione di mutazione custom
@@ -126,9 +124,9 @@ def reduce_marginalization_genetic(fn, GA_params):
     CXPB, MUTPB = (
         GA_params["CXPB"],
         GA_params["MUTPB"],
-    )  # crossover e mutation probability
+    )  # crossover and mutation probability
 
-    n_HOF = 1  # top soluzioni da ritornare (la "Hall of Fame" di DEAP è il set di tutte le top n soluzioni)
+    n_HOF = 1  # number of individuals to keep in the hall of fame
 
     pop = toolbox.population(n=POPULATION_SIZE)
 
@@ -202,10 +200,9 @@ def reduce_marginalization_genetic(fn, GA_params):
 
 def random_individual_missing(fn):
     """
-    _summary_
-
-    :param fn: _description_
-    :return: _description_
+    generates a random individual for the GA (missing values)
+    :param fn: the FairNet object
+    :return: a list of 0s and 1s 
     """
     return list(np.random.choice(a=list(fn.attrs.values()), size=len(fn.missing)))
 
@@ -228,12 +225,11 @@ def mutate_missing(individual, indpb, fn):
 
 def evaluate_missing(individual, fn, return_net):
     """
-    _summary_
-
-    :param individual: _description_
-    :param fn: _description_
-    :param return_net: _description_
-    :return: _description_
+    Evaluation function for the GA (missing values).
+    :param individual:
+    :param fn: 
+    :param return_net: 
+    :return: 
     """
     individual = individual[0]  # <- because DEAP
 
@@ -255,19 +251,18 @@ def evaluate_missing(individual, fn, return_net):
 
     if fn.fitness == "marg":
         return overall_marg, len(disc_nodes)
-    elif fn.fitness == "nodes":
+    else:  # fn.fitness == "nodes":
         return len(disc_nodes), overall_marg
-    elif fn.fitness == "round":
-        return round(np.mean(fair_marg), 2), budget, num_marg_nodes
+    # elif fn.fitness == "round":
+    #   return round(np.mean(fair_marg), 2), budget, num_marg_nodes
 
 
-def replace_mv_genetic(fn, GA_params):
+def replace_missing_values_genetic(fn, GA_params):
     """
-    _summary_
-
-    :param fn: _description_
-    :param GA_params: _description_
-    :return: _description_
+    Runs the GA for replacing missing values.
+    :param fn: the FairNet object
+    :param GA_params: the GA parameters
+    :return: 
     """
 
     if GA_params is None:
@@ -280,15 +275,15 @@ def replace_mv_genetic(fn, GA_params):
 
     creator.create(
         "Fitness", base.Fitness, weights=(-1.0, -1.0)
-    )  # <- -1 perché vogliamo minimizzare la fitness
+    )
     creator.create(
         "Individual", list, fitness=creator.Fitness
-    )  # <- l'individuo è definito come lista
+    )
 
-    toolbox = base.Toolbox()  # creiamo il toolbox
+    toolbox = base.Toolbox()
 
     toolbox.register("random_individual_missing", random_individual_missing, fn=fn)
-    # "nome_della_funzione per deap", nome_della_funzione vera e propria di python, parametri che passi alla funzione
+
 
     toolbox.register(
         "individual",
@@ -297,30 +292,30 @@ def replace_mv_genetic(fn, GA_params):
         toolbox.random_individual_missing,
         n=1,
     )
-    # n = numero di individui nella popolazione. Lasciamo 1
+
 
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
     toolbox.register(
         "evaluate_missing", evaluate_missing, fn=fn, return_net=False,
-    )  # funzione di valutazione
-    toolbox.register("mate", tools.cxTwoPoint)  # funzione di croxssover
+    )
+    toolbox.register("mate", tools.cxUniform, indpb=0.50)
     toolbox.register(
         "mutate_missing", mutate_missing, indpb=0.05, fn=fn
-    )  # funzione di mutazione custom
+    )
     toolbox.register("select", tools.selTournament, tournsize=3)
-    # tools.selNSGA2) #funzione di selezione
+
 
     print("Fitness:", fn.fitness)
-    NUM_GENERATIONS = GA_params["NUM_GENERATIONS"]  # numero di generazioni
-    POPULATION_SIZE = GA_params["POPULATION_SIZE"]  # popolazione per gen
+    NUM_GENERATIONS = GA_params["NUM_GENERATIONS"]
+    POPULATION_SIZE = GA_params["POPULATION_SIZE"]
 
     CXPB, MUTPB = (
         GA_params["CXPB"],
         GA_params["MUTPB"],
-    )  # crossover e mutation probability
+    )
 
-    n_HOF = 1  # top soluzioni da ritornare (la "Hall of Fame" di DEAP è il set di tutte le top n soluzioni)
+    n_HOF = 1
 
     pop = toolbox.population(n=POPULATION_SIZE)
 
@@ -383,10 +378,7 @@ def replace_mv_genetic(fn, GA_params):
         print(logbook.stream)
 
     hof.update(pop)
-    # la HoF è aggiornata con la nuova popolazione
-    # (o meglio, i suoi individui migliori w.r.t. fitness)
 
     attrs = evaluate_missing(hof.items[0], fn=fn, return_net=True)
 
     return attrs, logbook
-
