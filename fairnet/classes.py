@@ -117,7 +117,7 @@ class FairNet(object):
 
         self.solution = []
         indexes = [i for i, j in enumerate(individual) if j == 1]
-        self.solution = [self.candidates[i][:2] for i in indexes]
+        self.solution = [self.candidates[i] for i in indexes]
         if display:
             plot_GA_eval(logbook=logbook, fitness=self.fitness)
 
