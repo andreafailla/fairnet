@@ -219,7 +219,8 @@ def mutate_missing(individual, indpb, fn):
 
     for i in range(len(individual)):
         if np.random.random_sample() < indpb:
-            individual[i] = np.random.choice(a=list(set((list(fn.attrs.values())))))
+            individual[i] = np.random.choice([attr for attr in set((list(fn.attrs.values()))) if attr != individual[i]])
+
     return (individual,)
 
 
