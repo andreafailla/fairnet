@@ -21,8 +21,9 @@ Our algorithm finds a combination of edges to be added that minimises the number
 
 Plausible edges are then encoded in a binary vector. Starting from such a vector, a genetic algorithm tries to either minimise the SMS or the number of marginalised nodes. If equal solutions are found, the one with fewer interventions is prioritised.
 
-<img width="480" alt="image" src="https://github.com/andreafailla/fairnet/assets/80719913/25866589-de75-4fed-8714-3ad158c3d7cd">
-
+<p align="center">
+<img width="380" alt="image" src="https://github.com/andreafailla/fairnet/assets/80719913/25866589-de75-4fed-8714-3ad158c3d7cd">
+</p>
 
 
 
