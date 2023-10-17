@@ -112,7 +112,7 @@ def reduce_marginalization_genetic(fn, GA_params):
     toolbox.register(
         "evaluate", evaluate_marginalization, fn=fn, return_net=return_net
     )  # funzione di valutazione. Vedi quanto detto sopra
-    toolbox.register("mate", tools.cxUniform, indpb=0.50)  # funzione di crossover
+    toolbox.register("mate", tools.cxTwoPoint)  # funzione di crossover
     toolbox.register(
         "mutate", tools.mutFlipBit, indpb=0.2
     )  # funzione di mutazione custom
@@ -300,7 +300,7 @@ def replace_missing_values_genetic(fn, GA_params):
     toolbox.register(
         "evaluate_missing", evaluate_missing, fn=fn, return_net=False,
     )
-    toolbox.register("mate", tools.cxUniform, indpb=0.50)
+    toolbox.register("mate", tools.cxTwoPoint)
     toolbox.register(
         "mutate_missing", mutate_missing, indpb=0.05, fn=fn
     )
