@@ -19,10 +19,9 @@ A node can be considered marginalised if its absolute IMS is beyond a fixed thre
 
 Within the _FairNet_ library, we propose two independent algorithms -- _FairLabel_, and _FairEdges_.
 
-_FairLabel_ is intended to be used with networks where some nodes have missing metadata. It employs a genetic algorithm to find for these nodes the combination of labels that most reduce the number of marginalised nodes (following the above metric).
-
-_FairEdges_ finds a combination of edges to be added that minimises the number of marginalised nodes with relatively limited modifications to the network. Edges are selected following the triadic closure principle (e.g., we assume that a non-existing edge that would close 10 triangles is more likely to appear than one that would close 2 triangles). Plausible edges are then encoded in a binary vector. Starting from such a vector, a genetic algorithm tries to minimise the number of marginalised nodes. If equal solutions are found, the one with fewer interventions is prioritised.
-
+_FairLabel_ is intended to be used when some nodes have missing metadata. It employs a genetic algorithm to fill these nodes with the combination of labels that most reduce the number of marginalised nodes (following the above metric).
+_FairEdges_ finds a combination of edges to be added minimising the number of marginalised nodes, with relatively limited modifications to the network. Edges are selected following the _triadic closure principle_ (e.g., we assume that a non-existing edge that would close 10 triangles is more likely to appear than one that would close 2 triangles). Plausible edges are then encoded in a binary vector. Starting from such a vector, a genetic algorithm tries to minimise the number of marginalised nodes.
+ 
 Experimental results show that the _FairNet_ library successfully reduces the number of discriminated nodes.
 
 <p align="center">
