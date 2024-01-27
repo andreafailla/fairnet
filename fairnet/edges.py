@@ -16,7 +16,7 @@ def get_plausible_edges(fn: object) -> list:
     for node in tqdm(fn.disc_nodes):
         neighs = set(fn.g.neighbors(node))  # + [node]
         neighs2 = set(nx.ego_graph(fn.g, node, center=False, radius=2).nodes())
-        neighs2.difference(neighs)
+        neighs2 = neighs2.difference(neighs)
         for n in neighs2:
             if fn.strategy.endswith("g"):
                 if fn.is_marginalized(n):
