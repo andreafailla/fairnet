@@ -18,7 +18,7 @@ class FairNet(object):
 
         :param g: The graph
         :param attrs: The node-to-attribute value dict
-       
+
         """
         self.g = g.copy()
         self.attrs = {k: v for k, v in attrs.items()}
@@ -28,24 +28,25 @@ class FairNet(object):
         ]  # nodes with missing values
         if len(self.missing) > 0:
             warnings.warn(
-                f"{len(self.missing)} missing attribute values detected. Either remove them or replace them with the 'replace_missing_values' method."
+                f"{len(self.missing)} missing attribute values detected. Either remove them or replace them with the "
+                f"'replace_missing_values' method."
             )
         self.enc = self.__label_encoder()
 
-        self.thresh = None
-        self.fitness = None
-        self.strategy = None
-        self.to_remove = None
-        self.to_add = None
-        self.candidates = []
+        self.thresh = None  # marginalization threshold
+        self.fitness = None  # fitness function
+        self.strategy = None  # strategy
+        self.to_remove = None  # percentage of edges to remove
+        self.to_add = None  # percentage of edges to add
+        self.candidates = []  # list of candidate edges
 
-        self.weights = None
-        self.marg_dict = None
-        self.disc_nodes = None
+        self.weights = None  # attribute weights
+        self.marg_dict = None  # marginalization scores
+        self.disc_nodes = None  # marginalized nodes
 
-        self.logbook = None
-        self.solution = None
-        self.fair_g = None
+        self.logbook = None  # GA logbook
+        self.solution = None  # GA best solution
+        self.fair_g = None  # fair graph
 
     def __label_encoder(self):
         enc = dict()
@@ -74,13 +75,13 @@ class FairNet(object):
         return self
 
     def run(
-            self,
-            fitness: str,
-            strategy: str,
-            to_add: float = None,
-            to_remove: float = None,
-            GA_params: dict = None,
-            display: bool = True,
+        self,
+        fitness: str,
+        strategy: str,
+        to_add: float = None,
+        to_remove: float = None,
+        GA_params: dict = None,
+        display: bool = True,
     ):
         """
         Executes the algorithm to reduce marginalization.
@@ -142,7 +143,9 @@ class FairNet(object):
 
         plot_marginalization_scores_by_attr(self.attrs, self.marg_dict)
 
-    def replace_missing_values(self, thresh: float, fitness: str, GA_params=None, display=True):
+    def replace_missing_values(
+        self, thresh: float, fitness: str, GA_params=None, display=True
+    ):
         """
         Replaces missing values so as to minimize marginalization.
         :param thresh: the threshold for marginalization
