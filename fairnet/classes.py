@@ -122,11 +122,11 @@ class FairNet(object):
         if display:
             plot_GA_eval(logbook=logbook, fitness=self.fitness)
 
-    def marginalization_info(self) -> None:
+    def marginalization_info(self) -> Tuple[float, float]:
         """
         Prints marginalization information. In detail, it prints the weights, the number of marginalized nodes,
         the average marginalization score, and plots the marginalization scores.
-        return:
+        return: score and nodes
         """
         print("=" * 10, "STATS", "=" * 10)
         print("\nWeights:", self.weights)
@@ -142,6 +142,7 @@ class FairNet(object):
         plot_marginalization_scores(self.marg_dict)
 
         plot_marginalization_scores_by_attr(self.attrs, self.marg_dict)
+        return (len(self.disc_nodes), network_marginalization_score(self.marg_dict))
 
     def replace_missing_values(
         self, thresh: float, fitness: str, GA_params=None, display=True
