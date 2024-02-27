@@ -27,7 +27,9 @@ def compute_weights(attrs: dict) -> dict:
     return weights
 
 
-def individual_marginalization_score(g: nx.Graph, node: int, attrs: dict, weights: dict) -> float:
+def individual_marginalization_score(
+    g: nx.Graph, node: int, attrs: dict, weights: dict
+) -> float:
     """
     Computes the marginalization score of a node.
     :param g: the graph object
