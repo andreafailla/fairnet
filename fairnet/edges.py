@@ -1,11 +1,10 @@
 import networkx as nx
 from tqdm import tqdm
-from .classes import FairNet
 
 __all__ = ["get_plausible_edges", "get_removable_edges"]
 
 
-def get_plausible_edges(fn: FairNet) -> list:
+def get_plausible_edges(fn: object) -> list:
     """
     compute the pool of plausible edges to add to the graph
     :param fn: the FairNet object
@@ -39,7 +38,7 @@ def get_plausible_edges(fn: FairNet) -> list:
     return edges[: round(len(edges) * fn.to_add)]
 
 
-def get_removable_edges(fn: FairNet) -> list:
+def get_removable_edges(fn: object) -> list:
     """
     compute the pool of removable edges
     :param fn: the FairNet object

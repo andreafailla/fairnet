@@ -1,12 +1,11 @@
 import numpy as np
 from deap import creator, base, tools
 from .marginalization import *
-from .classes import FairNet
 
 __all__ = ["reduce_marginalization_genetic", "replace_missing_values_genetic"]
 
 
-def random_individual(fn: FairNet) -> list:
+def random_individual(fn: object) -> list:
     """
     generates a random individual for the GA
     :param fn: the FairNet object
@@ -18,7 +17,7 @@ def random_individual(fn: FairNet) -> list:
 
 def evaluate_marginalization(
     individual: tuple,
-    fn: FairNet,
+    fn: object,
     return_net: bool,
 ) -> tuple:
     """
@@ -72,7 +71,7 @@ def evaluate_marginalization(
     #    return round(np.mean(fair_marg), 2), budget, num_marg_nodes
 
 
-def reduce_marginalization_genetic(fn: FairNet, GA_params: dict = None) -> tuple:
+def reduce_marginalization_genetic(fn: object, GA_params: dict = None) -> tuple:
     """
     _summary_
 
@@ -200,7 +199,7 @@ def reduce_marginalization_genetic(fn: FairNet, GA_params: dict = None) -> tuple
     return g, logbook, individual
 
 
-def random_individual_missing(fn: FairNet) -> list:
+def random_individual_missing(fn: object) -> list:
     """
     generates a random individual for the GA (missing values)
     :param fn: the FairNet object
@@ -209,7 +208,7 @@ def random_individual_missing(fn: FairNet) -> list:
     return list(np.random.choice(a=list(fn.attrs.values()), size=len(fn.missing)))
 
 
-def mutate_missing(individual: tuple, indpb: float, fn: FairNet) -> tuple:
+def mutate_missing(individual: tuple, indpb: float, fn: object) -> tuple:
     """
     _summary_
 
@@ -232,7 +231,7 @@ def mutate_missing(individual: tuple, indpb: float, fn: FairNet) -> tuple:
     return (individual,)
 
 
-def evaluate_missing(individual: tuple, fn: FairNet, return_net: bool) -> tuple:
+def evaluate_missing(individual: tuple, fn: object, return_net: bool) -> tuple:
     """
     Evaluation function for the GA (missing values).
     :param individual:
@@ -266,7 +265,7 @@ def evaluate_missing(individual: tuple, fn: FairNet, return_net: bool) -> tuple:
     #   return round(np.mean(fair_marg), 2), budget, num_marg_nodes
 
 
-def replace_missing_values_genetic(fn: FairNet, GA_params: dict = None) -> tuple:
+def replace_missing_values_genetic(fn: object, GA_params: dict = None) -> tuple:
     """
     Runs the GA for replacing missing values.
     :param fn: the FairNet object
